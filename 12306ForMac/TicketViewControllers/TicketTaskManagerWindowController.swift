@@ -76,11 +76,11 @@ class TicketTasksManager: NSObject {
     func decodeJsonFrom(_ jsonString:String) {
         ticketTasks = [TicketTask]()
         if let dataFromString = jsonString.data(using: .utf8, allowLossyConversion: false) {
-            let json = JSON(data: dataFromString)
-            if json.array == nil {
+            let json = try? JSON(data: dataFromString)
+            guard let JSON = json,  let array = JSON.array else {
                 return
             }
-            for item in json.array! {
+            for item in array {
                 let ticketTask = TicketTask(json:item)
                 ticketTasks.append(ticketTask)
             }
