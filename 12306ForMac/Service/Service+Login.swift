@@ -16,7 +16,12 @@ extension Service {
     
 // MARK: - Request Flow
     func preLoginFlow(success:@escaping (NSImage)->Void,failure:@escaping (NSError)->Void){
-        loginInit().then{dynamicJs -> Promise<Void> in
+        let cookie1 = HTTPCookie(properties: [.name:"RAIL_DEVICEID",.domain:"kyfw.12306.cn",.value:"CyeQGv5X_Y9BsIIkxXGf8s_wPmVs2yH4idlQo3d4KxgeY10nAnXWcm72qwxLLd_xqQm-v8UaFAVL7elDx_KFZw1FN3MkwJcbQAGtPIFEWfWPsdsOr5_jgjV-HSn7t-2u2fZgGrTOSCpfoYMOF41I1qWmNkGkObIX",.path:"/"])
+        let cookie2 = HTTPCookie(properties: [.name:"RAIL_EXPIRATION",.domain:"kyfw.12306.cn",.value:"1516426090658",.path:"/"])
+        Service.Manager.session.configuration.httpCookieStorage?.setCookie(cookie1!)
+        Service.Manager.session.configuration.httpCookieStorage?.setCookie(cookie2!)
+    
+        loginInit().then{(dynamicJs) -> Promise<Void> in
             return self.requestDynamicJs(dynamicJs, referHeader: ["refer": "https://kyfw.12306.cn/otn/login/init"])
         }.then{_ -> Promise<NSImage> in
             return self.getPassCodeNewForLogin()
@@ -184,7 +189,8 @@ extension Service {
         return Promise{ fulfill, reject in
             let url = passport_captcha_check
             let params = ["answer":randCodeStr,"login_site":"E","rand":"sjrand"]
-            let headers = ["refer": "https://kyfw.12306.cn/otn/login/init"]
+            let headers = ["Referer": "https://kyfw.12306.cn/otn/login/init",
+                           "X-Requested-With":"XMLHttpRequest"]
             Service.Manager.request(url, method:.post, parameters: params, headers:headers).responseJSON(completionHandler:{response in
                 switch (response.result){
                 case .failure(let error):
@@ -204,9 +210,12 @@ extension Service {
     func loginUserWith(_ user:String, passWord:String, randCodeStr:String)->Promise<Void>{
         return Promise{ fulfill, reject in
             let url = passport_login
+            
             let params = ["username":user,"password":passWord,"appid":passport_appId]
-            let headers = ["refer": "https://kyfw.12306.cn/otn/login/init"]
-            Service.Manager.request(url, method:.post, parameters: params, headers:headers).responseJSON(completionHandler:{response in
+            let headers = ["Referer": "https://kyfw.12306.cn/otn/login/init",
+                           "Origin":"https://kyfw.12306.cn",
+                           "X-Requested-With":"XMLHttpRequest"]
+            Service.Manager.request(url, method:.post, parameters: params,encoding: URLEncoding.default, headers:headers).responseJSON(completionHandler:{response in
                 switch (response.result){
                 case .failure(let error):
                     reject(error)
